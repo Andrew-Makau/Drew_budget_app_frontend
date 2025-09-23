@@ -7,6 +7,8 @@ import './widgets/animated_gradient_background.dart';
 import './widgets/registration_form.dart';
 import './widgets/social_registration_buttons.dart';
 
+import '../../services/auth_service.dart'; // 👈 add this import at the top
+
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
 
@@ -80,29 +82,30 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     _formData = formData;
   }
 
-  Future<void> _handleRegistration() async {
-    if (!_isFormValid) return;
+Future<void> _handleRegistration() async {
+  if (!_isFormValid) return;
 
-    // Haptic feedback
-    HapticFeedback.lightImpact();
+  HapticFeedback.lightImpact();
 
-    setState(() {
-      _isLoading = true;
-    });
+  setState(() {
+    _isLoading = true;
+  });
 
-    // Simulate registration process
-    await Future.delayed(const Duration(seconds: 2));
+  try {
+    // Call backend signup API
+    final authService = AuthService();
+    await authService.signup(
+      _formData['email']!,
+      _formData['password']!,
+    );
 
     if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
 
-      // Show success message
+      // ✅ Success SnackBar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text('Account created successfully! Please verify your email.'),
+          content: Text('Account created successfully! Please login.'),
           backgroundColor: AppTheme.lightTheme.colorScheme.tertiary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -111,13 +114,23 @@ class _RegistrationScreenState extends State<RegistrationScreen>
         ),
       );
 
-      // Navigate to login screen after successful registration
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login-screen');
-      }
+      // Navigate to login screen
+      Navigator.pushReplacementNamed(context, '/login-screen');
+    }
+  } catch (e) {
+    if (mounted) {
+      setState(() => _isLoading = false);
+
+      // ❌ Error SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Registration failed: $e'),
+          backgroundColor: AppTheme.lightTheme.colorScheme.error,
+        ),
+      );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

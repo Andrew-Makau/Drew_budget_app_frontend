@@ -10,6 +10,8 @@ import './widgets/floating_input_field.dart';
 import './widgets/primary_button.dart';
 import './widgets/social_login_button.dart';
 
+import '../../services/auth_service.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -126,53 +128,57 @@ class _LoginScreenState extends State<LoginScreen>
     return null;
   }
 
-  bool _validateCredentials(String email, String password) {
-    for (var userType in mockCredentials.keys) {
-      var credentials = mockCredentials[userType] as Map<String, dynamic>;
-      if (credentials["email"] == email &&
-          credentials["password"] == password) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   void _handleLogin() async {
-    if (!_formKey.currentState!.validate()) {
-      HapticFeedback.heavyImpact();
-      return;
-    }
+  if (!_formKey.currentState!.validate()) {
+    HapticFeedback.heavyImpact();
+    return;
+  }
 
-    setState(() {
-      _isLoading = true;
-    });
+  setState(() {
+    _isLoading = true;
+  });
 
-    HapticFeedback.mediumImpact();
+  HapticFeedback.mediumImpact();
 
-    // Simulate authentication delay
-    await Future.delayed(const Duration(seconds: 2));
+  try {
+    // 🔑 Call real backend login via AuthService
+    final response = await AuthService().login(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+    );
 
-    if (_validateCredentials(_emailController.text, _passwordController.text)) {
-      HapticFeedback.lightImpact();
+    HapticFeedback.lightImpact();
 
+    if (response.statusCode == 200) {
       if (mounted) {
+        setState(() => _isLoading = false);
+
+        // 🟢 Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login successful! 🎉")),
+        );
+
+        // ✅ Navigate to dashboard
         Navigator.pushReplacementNamed(context, '/dashboard-home-screen');
       }
     } else {
-      HapticFeedback.heavyImpact();
-
+      // Backend sent error (e.g., 400 or 401)
       if (mounted) {
-        _showErrorDialog(
-            'Invalid credentials. Please check your email and password.');
+        _showErrorDialog("Login failed: ${response.data["message"] ?? "Unknown error"}");
       }
     }
+  } catch (e) {
+    HapticFeedback.heavyImpact();
 
     if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
+      _showErrorDialog("Login failed: $e");
     }
   }
+}
+
+
 
   void _handleBiometricLogin() async {
     HapticFeedback.mediumImpact();
