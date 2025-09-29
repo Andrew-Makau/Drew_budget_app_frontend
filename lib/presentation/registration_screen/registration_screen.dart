@@ -92,36 +92,46 @@ Future<void> _handleRegistration() async {
   });
 
   try {
-    // Call backend signup API
     final authService = AuthService();
-    await authService.signup(
+    final response = await authService.signup(
       _formData['email']!,
       _formData['password']!,
     );
 
-    if (mounted) {
-      setState(() => _isLoading = false);
+    if (response.statusCode == 201) {
+      if (mounted) {
+        setState(() => _isLoading = false);
 
-      // ✅ Success SnackBar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Account created successfully! Please login.'),
-          backgroundColor: AppTheme.lightTheme.colorScheme.tertiary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+        // Success
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Account created successfully! Please login.'),
+            backgroundColor: AppTheme.lightTheme.colorScheme.tertiary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-        ),
-      );
+        );
 
-      // Navigate to login screen
-      Navigator.pushReplacementNamed(context, '/login-screen');
+        // Navigate to login screen
+        Navigator.pushReplacementNamed(context, '/login-screen');
+      }
+    } else {
+      final msg = response.data?['error'] ?? response.data?['message'] ?? 'Registration failed';
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: AppTheme.lightTheme.colorScheme.error,
+          ),
+        );
+      }
     }
   } catch (e) {
     if (mounted) {
       setState(() => _isLoading = false);
-
-      // ❌ Error SnackBar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Registration failed: $e'),
@@ -131,6 +141,7 @@ Future<void> _handleRegistration() async {
     }
   }
 }
+
 
   @override
   Widget build(BuildContext context) {

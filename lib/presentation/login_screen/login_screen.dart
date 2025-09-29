@@ -142,41 +142,35 @@ class _LoginScreenState extends State<LoginScreen>
   HapticFeedback.mediumImpact();
 
   try {
-    // 🔑 Call real backend login via AuthService
-    final response = await AuthService().login(
+    final authService = AuthService();
+    final response = await authService.login(
       _emailController.text.trim(),
       _passwordController.text.trim(),
     );
 
-    HapticFeedback.lightImpact();
-
+    // success (200)
     if (response.statusCode == 200) {
+      HapticFeedback.lightImpact();
       if (mounted) {
         setState(() => _isLoading = false);
-
-        // 🟢 Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login successful! 🎉")),
-        );
-
-        // ✅ Navigate to dashboard
         Navigator.pushReplacementNamed(context, '/dashboard-home-screen');
       }
     } else {
-      // Backend sent error (e.g., 400 or 401)
+      final msg = response.data?['error'] ?? response.data?['message'] ?? 'Login failed';
       if (mounted) {
-        _showErrorDialog("Login failed: ${response.data["message"] ?? "Unknown error"}");
+        setState(() => _isLoading = false);
+        _showErrorDialog(msg);
       }
     }
   } catch (e) {
     HapticFeedback.heavyImpact();
-
     if (mounted) {
       setState(() => _isLoading = false);
-      _showErrorDialog("Login failed: $e");
+      _showErrorDialog('Login failed: $e');
     }
   }
 }
+
 
 
 

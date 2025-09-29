@@ -47,6 +47,8 @@ dependencies:
   flutter_svg: ^2.0.10+1   # latest stable as of Sept 2025
   cached_network_image: ^3.4.1   # latest stable as of Sept 2025
   dio: ^5.4.3+1   # <-- add this line
+  flutter_secure_storage: ^8.1.0
+
 
 
 

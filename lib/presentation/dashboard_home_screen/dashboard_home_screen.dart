@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../services/auth_service.dart';
 import './widgets/balance_card_widget.dart';
 import './widgets/quick_actions_widget.dart';
 import './widgets/recent_transactions_widget.dart';
@@ -123,7 +124,13 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
       CurvedAnimation(
           parent: _refreshAnimationController, curve: Curves.easeInOut),
     );
+
+    // Debug: check if token is stored
+    AuthService().getToken().then((token) {
+      print("🔑 Stored token: $token");
+    });
   }
+
 
   @override
   void dispose() {
