@@ -7,8 +7,41 @@ import '../../core/app_export.dart';
 import '../../services/auth_service.dart';
 import './widgets/balance_card_widget.dart';
 import './widgets/quick_actions_widget.dart';
-import './widgets/recent_transactions_widget.dart';
 import './widgets/spending_summary_widget.dart';
+
+class RecentTransactionsWidget extends StatelessWidget {
+  final List<Map<String, dynamic>> transactions;
+  final Function(Map<String, dynamic>) onEditTransaction;
+  final Function(Map<String, dynamic>) onDeleteTransaction;
+  final Function(Map<String, dynamic>) onCategorizeTransaction;
+
+  const RecentTransactionsWidget({
+    Key? key,
+    required this.transactions,
+    required this.onEditTransaction,
+    required this.onDeleteTransaction,
+    required this.onCategorizeTransaction,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Placeholder widget for recent transactions
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recent Transactions',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        ...transactions.map((transaction) => ListTile(
+              title: Text(transaction['title'].toString()),
+              subtitle: Text(transaction['category'].toString()),
+              trailing: Text('\$${transaction['amount'].toString()}'),
+            )),
+      ],
+    );
+  }
+}
 
 class DashboardHomeScreen extends StatefulWidget {
   const DashboardHomeScreen({super.key});
@@ -542,3 +575,4 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
     );
   }
 }
+

@@ -1,115 +1,56 @@
+
 import 'package:flutter/material.dart';
-import '/services/transaction_service.dart';
-import '/widgets/recent_transactions_widget.dart';
 
-class DashboardHomeScreen extends StatefulWidget {
-  const DashboardHomeScreen({super.key});
+class RecentTransactionsWidget extends StatelessWidget {
+  final List<Map<String, dynamic>> transactions;
+  final Function(Map<String, dynamic>) onEditTransaction;
+  final Function(Map<String, dynamic>) onDeleteTransaction;
+  final Function(Map<String, dynamic>) onCategorizeTransaction;
 
-  @override
-  State<DashboardHomeScreen> createState() => _DashboardHomeScreenState();
-}
-
-class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
-  final TransactionService _transactionService = TransactionService();
-  List<Map<String, dynamic>> _transactions = [];
-  bool _loading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTransactions();
-  }
-
-  Future<void> _loadTransactions() async {
-    try {
-      final txns = await _transactionService.fetchTransactions();
-      setState(() {
-        _transactions = txns.cast<Map<String, dynamic>>();
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
-    }
-  }
+  const RecentTransactionsWidget({
+    Key? key,
+    required this.transactions,
+    required this.onEditTransaction,
+    required this.onDeleteTransaction,
+    required this.onCategorizeTransaction,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          "Dashboard",
-          style: TextStyle(fontWeight: FontWeight.bold),
+    if (transactions.isEmpty) {
+      return Center(
+        child: Text(
+          'No recent transactions.',
+          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
         ),
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: Colors.blueAccent,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error, color: Colors.red, size: 40),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Error: $_error",
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton.icon(
-                          onPressed: _loadTransactions,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text("Retry"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                          ),
-                        )
-                      ],
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Recent Transactions",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: RecentTransactionsWidget(
-                              transactions: _transactions,
-                              onEditTransaction: (txn) {},
-                              onDeleteTransaction: (txn) {},
-                              onCategorizeTransaction: (txn) {},
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-      ),
+      );
+    }
+    return ListView.separated(
+      itemCount: transactions.length,
+      separatorBuilder: (context, index) => Divider(height: 1),
+      itemBuilder: (context, index) {
+        final txn = transactions[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor: txn['categoryColor'] ?? Colors.blueAccent,
+            child: Icon(
+              txn['type'] == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
+              color: Colors.white,
+            ),
+          ),
+          title: Text(txn['title'] ?? ''),
+          subtitle: Text(txn['category'] ?? ''),
+          trailing: Text(
+            (txn['type'] == 'income' ? '+' : '-') + '	' + (txn['amount']?.toStringAsFixed(2) ?? '0.00'),
+            style: TextStyle(
+              color: txn['type'] == 'income' ? Colors.green : Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          onTap: () => onEditTransaction(txn),
+          onLongPress: () => onDeleteTransaction(txn),
+        );
+      },
     );
   }
 }
