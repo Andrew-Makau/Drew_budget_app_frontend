@@ -1,60 +1,56 @@
-// lib/services/transaction_service.dart
+import 'dart:ui';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TransactionService {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: "http://10.0.2.2:5000", // use for Android emulator; Chrome => 127.0.0.1
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+      headers: {"Content-Type": "application/json"},
+    ),
+  );
 
-  // Determine base URL by platform
-  static String get _baseUrl {
-    if (kIsWeb) return "http://127.0.0.1:5000"; // Flutter web
-    return "http://10.0.2.2:5000";               // Android emulator
-    // If running on a real device, replace with your PC IP: http://192.168.x.y:5000
-  }
-
-  final Dio _dio;
-
-  TransactionService()
-      : _dio = Dio(BaseOptions(
-          baseUrl: _baseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-          headers: {"Content-Type": "application/json"},
-        ));
-
-  /// Fetch transactions for the logged-in user.
-  /// If [token] is omitted, the service will try to read token from secure storage
-  Future<List<dynamic>> fetchTransactions({String? token}) async {
+  /// Fetch all transactions for the current logged-in user
+  Future<List<Map<String, dynamic>>> fetchTransactions() async {
     try {
-      // If token not passed, read it from secure storage
-      final t = token ?? await _storage.read(key: 'jwt_token');
-      if (t == null) throw Exception('No JWT token found. Please login.');
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token'); // ✅ token saved from login
 
-      final resp = await _dio.get(
+      if (token == null) {
+        throw Exception("User not logged in — missing token");
+      }
+
+      final response = await _dio.get(
         "/transactions",
         options: Options(
-          headers: {"Authorization": "Bearer $t"},
+          headers: {"Authorization": "Bearer $token"},
         ),
       );
 
-      // Expect backend to return { "transactions": [...] }
-      final data = resp.data;
-      if (data is Map && data['transactions'] != null) {
-        return List<dynamic>.from(data['transactions']);
+      if (response.statusCode == 200) {
+        // Convert backend response to List<Map<String, dynamic>>
+        List data = response.data;
+        return data.map<Map<String, dynamic>>((t) {
+          return {
+            "id": t["id"],
+            "title": t["note"] ?? "No title",
+            "category": "General", // backend may not send category name directly
+            "amount": t["amount"]?.toDouble() ?? 0.0,
+            "type": t["type"],
+            "date": DateTime.tryParse(t["date"] ?? ""),
+            "categoryColor": t["type"] == "income"
+                ? const Color(0xFF4CAF50)
+                : const Color(0xFFE57373),
+          };
+        }).toList();
+      } else {
+        throw Exception("Failed to load transactions: ${response.statusMessage}");
       }
-
-      // If backend returned a raw list fallback (less likely because we updated backend)
-      if (data is List) return List<dynamic>.from(data);
-
-      throw Exception('Unexpected response format from server.');
     } on DioException catch (e) {
-      // Try to show friendly error message
-      final msg = (e.response?.data != null && e.response?.data is Map)
-          ? (e.response!.data['error'] ?? e.response!.data['message'] ?? e.toString())
-          : e.message;
-      throw Exception(msg);
+      throw Exception(e.response?.data["error"] ?? "Network or server error");
     }
   }
 }

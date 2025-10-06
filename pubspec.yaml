@@ -48,6 +48,7 @@ dependencies:
   cached_network_image: ^3.4.1   # latest stable as of Sept 2025
   dio: ^5.4.3+1   # <-- add this line
   flutter_secure_storage: ^8.1.0
+  shared_preferences: ^2.5.3
 
 
 
