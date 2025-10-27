@@ -20,6 +20,17 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
 
+  <!--
+    Development-only Content Security Policy:
+    The Dart Dev Compiler (DDC) and some dev tooling use eval()/dynamic
+    code generation which is blocked by strict CSP. During local development
+    you can allow 'unsafe-eval' so the app runs in DDC mode. Remove this
+    or tighten CSP for production builds. See README or Chrome DevTools CSP
+    messages if you need to relax additional directives.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; connect-src 'self' ws: http: https:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">

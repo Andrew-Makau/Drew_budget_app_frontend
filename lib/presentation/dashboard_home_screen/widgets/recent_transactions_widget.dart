@@ -8,12 +8,12 @@ class RecentTransactionsWidget extends StatelessWidget {
   final Function(Map<String, dynamic>) onCategorizeTransaction;
 
   const RecentTransactionsWidget({
-    Key? key,
+    super.key,
     required this.transactions,
     required this.onEditTransaction,
     required this.onDeleteTransaction,
     required this.onCategorizeTransaction,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class RecentTransactionsWidget extends StatelessWidget {
           title: Text(txn['title'] ?? ''),
           subtitle: Text(txn['category'] ?? ''),
           trailing: Text(
-            (txn['type'] == 'income' ? '+' : '-') + '	' + (txn['amount']?.toStringAsFixed(2) ?? '0.00'),
+            '${txn['type'] == 'income' ? '+' : '-'}	' + (txn['amount']?.toStringAsFixed(2) ?? '0.00'),
             style: TextStyle(
               color: txn['type'] == 'income' ? Colors.green : Colors.red,
               fontWeight: FontWeight.bold,
