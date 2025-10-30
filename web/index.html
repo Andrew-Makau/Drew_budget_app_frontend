@@ -24,12 +24,19 @@
     Development-only Content Security Policy:
     The Dart Dev Compiler (DDC) and some dev tooling use eval()/dynamic
     code generation which is blocked by strict CSP. During local development
-    you can allow 'unsafe-eval' so the app runs in DDC mode. Remove this
-    or tighten CSP for production builds. See README or Chrome DevTools CSP
-    messages if you need to relax additional directives.
+    we relax the policy so DDC and the CanvasKit runtime (served from
+    https://www.gstatic.com) can be loaded. IMPORTANT: this is a
+    development-only convenience. Remove or tighten this before deploying
+    to production (see README or Chrome DevTools CSP messages for guidance).
   -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; connect-src 'self' ws: http: https:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+        content="default-src 'self' data: blob: https:; 
+                 script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.gstatic.com; 
+                 script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://www.gstatic.com; 
+                 connect-src 'self' ws: wss: http: https:; 
+                 style-src 'self' 'unsafe-inline' https:; 
+                 img-src 'self' data: blob: https:; 
+                 font-src 'self' data: https://fonts.gstatic.com;">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
