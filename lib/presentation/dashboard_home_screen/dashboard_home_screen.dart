@@ -36,6 +36,7 @@ class RecentTransactionsWidget extends StatelessWidget {
         ),
         SizedBox(height: 8),
         transactions.isEmpty
+
             ? Text(
                 'No recent transactions',
                 style: Theme.of(context).textTheme.bodySmall,
