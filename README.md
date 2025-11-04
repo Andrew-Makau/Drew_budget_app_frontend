@@ -17,3 +17,5 @@ samples, guidance on mobile development, and a full API reference.
 
 flutter run --device-timeout=120 -d emulator-5554    -----Emulator
 flutter run -d chrome    -------Chrome
+
+flutter run -d chrome --dart-define=FLUTTER_WEB_USE_SKIA=false

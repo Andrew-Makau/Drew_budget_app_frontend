@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
-import '../../../../../core/app_export.dart';
+import '../../../core/app_export.dart';
 
 class CategorySelectorWidget extends StatefulWidget {
   final Function(Map<String, dynamic>) onCategorySelected;
@@ -91,7 +91,8 @@ class _CategorySelectorWidgetState extends State<CategorySelectorWidget> {
         ),
         SizedBox(height: 2.h),
         SizedBox(
-          height: 12.h,
+          // Slightly increased to avoid minor bottom overflows on smaller devices
+          height: 14.h,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: categories.length,
@@ -128,7 +129,8 @@ class _CategorySelectorWidgetState extends State<CategorySelectorWidget> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: EdgeInsets.all(2.w),
+                        // Slightly reduce padding to help fit within the row height
+                        padding: EdgeInsets.all(1.6.w),
                         decoration: BoxDecoration(
                           color: (category['color'] as Color)
                               .withValues(alpha: 0.1),
@@ -140,7 +142,7 @@ class _CategorySelectorWidgetState extends State<CategorySelectorWidget> {
                           size: 6.w,
                         ),
                       ),
-                      SizedBox(height: 1.h),
+                      SizedBox(height: 0.6.h),
                       Text(
                         category['name'] as String,
                         style:

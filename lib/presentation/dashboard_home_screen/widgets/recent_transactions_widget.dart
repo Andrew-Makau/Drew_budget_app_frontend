@@ -25,7 +25,12 @@ class RecentTransactionsWidget extends StatelessWidget {
         ),
       );
     }
+    // NOTE: This widget is rendered inside a SingleChildScrollView on the dashboard.
+    // To avoid "Vertical viewport was given unbounded height" and similar layout
+    // exceptions, disable inner scrolling and enable shrinkWrap here.
     return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: transactions.length,
       separatorBuilder: (context, index) => Divider(height: 1),
       itemBuilder: (context, index) {
@@ -41,7 +46,7 @@ class RecentTransactionsWidget extends StatelessWidget {
           title: Text(txn['title'] ?? ''),
           subtitle: Text(txn['category'] ?? ''),
           trailing: Text(
-            '${txn['type'] == 'income' ? '+' : '-'}	' + (txn['amount']?.toStringAsFixed(2) ?? '0.00'),
+            '${txn['type'] == 'income' ? '+' : '-'} ' + (txn['amount']?.toStringAsFixed(2) ?? '0.00'),
             style: TextStyle(
               color: txn['type'] == 'income' ? Colors.green : Colors.red,
               fontWeight: FontWeight.bold,

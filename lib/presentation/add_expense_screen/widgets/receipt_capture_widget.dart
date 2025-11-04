@@ -159,7 +159,7 @@ class _ReceiptCaptureWidgetState extends State<ReceiptCaptureWidget> {
   Widget _buildCapturedImage() {
     return Container(
       width: double.infinity,
-      height: 25.h,
+      height: 30.h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -260,7 +260,7 @@ class _ReceiptCaptureWidgetState extends State<ReceiptCaptureWidget> {
   Widget _buildCameraOptions() {
     return Container(
       width: double.infinity,
-      height: 25.h,
+      height: 30.h,
       decoration: BoxDecoration(
         color: AppTheme.lightTheme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -274,6 +274,11 @@ class _ReceiptCaptureWidgetState extends State<ReceiptCaptureWidget> {
   }
 
   Widget _buildCameraPreview() {
+    // Defensive: If controller isn't ready, fall back to action buttons
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      return _buildCameraButtons();
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Stack(
@@ -356,14 +361,14 @@ class _ReceiptCaptureWidgetState extends State<ReceiptCaptureWidget> {
           color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
           size: 12.w,
         ),
-        SizedBox(height: 2.h),
+        SizedBox(height: 1.5.h),
         Text(
           'Add Receipt Photo',
           style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
             color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
           ),
         ),
-        SizedBox(height: 3.h),
+        SizedBox(height: 2.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -389,7 +394,7 @@ class _ReceiptCaptureWidgetState extends State<ReceiptCaptureWidget> {
                     ),
               label: Text(_isInitializing ? 'Loading...' : 'Camera'),
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.6.h),
               ),
             ),
             OutlinedButton.icon(
@@ -401,7 +406,7 @@ class _ReceiptCaptureWidgetState extends State<ReceiptCaptureWidget> {
               ),
               label: const Text('Gallery'),
               style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.6.h),
               ),
             ),
           ],
