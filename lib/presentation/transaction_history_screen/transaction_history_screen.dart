@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../services/transaction_service.dart';
 import './widgets/empty_state_widget.dart';
 import './widgets/filter_chips_widget.dart';
 import './widgets/monthly_summary_widget.dart';
@@ -30,6 +31,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
   bool _isMultiSelectMode = false;
   bool _isLoading = false;
   String _searchQuery = '';
+  bool _useLiveData = false;
 
   late AnimationController _fabAnimationController;
   late Animation<double> _fabAnimation;
@@ -175,6 +177,72 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
     setState(() {
       _isLoading = false;
     });
+  }
+
+  Future<void> _fetchLiveTransactions() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final service = TransactionService();
+      final live = await service.fetchTransactions();
+
+      // Map service transactions into the shape expected by TransactionHistory widgets
+      // Expected keys: id, description, amount, type, category, paymentMethod, date (DateTime), isFavorite
+      final mapped = <Map<String, dynamic>>[];
+      for (var i = 0; i < live.length; i++) {
+        final t = live[i];
+        final id = (t['id']?.toString().isNotEmpty == true)
+            ? t['id'].toString()
+            : (i + 1).toString();
+
+        final description = (t['description'] ?? t['title'] ?? 'No title').toString();
+        final category = (t['category'] ?? 'General').toString();
+        final type = (t['type'] ?? 'expense').toString();
+        final amountRaw = t['amount'];
+        final amount = (amountRaw is num)
+            ? amountRaw.toDouble()
+            : double.tryParse(amountRaw?.toString() ?? '') ?? 0.0;
+        final dateRaw = t['date'];
+        DateTime date;
+        if (dateRaw is DateTime) {
+          date = dateRaw;
+        } else if (dateRaw != null) {
+          date = DateTime.tryParse(dateRaw.toString()) ?? DateTime.now();
+        } else {
+          date = DateTime.now();
+        }
+
+        mapped.add({
+          'id': id,
+          'description': description,
+          'amount': amount,
+          'type': type,
+          'category': category,
+          'paymentMethod': 'Bank Transfer',
+          'date': date,
+          'isFavorite': false,
+        });
+      }
+
+      setState(() {
+        _allTransactions = mapped;
+      });
+      _applyFilters();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load live transactions: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _onScroll() {
@@ -381,8 +449,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
 
   Future<void> _refreshTransactions() async {
     HapticFeedback.lightImpact();
-    await Future.delayed(const Duration(seconds: 1));
-    _loadMockData();
+    if (_useLiveData) {
+      await _fetchLiveTransactions();
+    } else {
+      await Future.delayed(const Duration(milliseconds: 300));
+      _loadMockData();
+    }
   }
 
   Map<String, dynamic> _getMonthlySummary() {
@@ -603,6 +675,31 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
     return AppBar(
       title: Text('Transaction History'),
       actions: [
+        // Live/Mock toggle
+        Row(
+          children: [
+            Text(
+              _useLiveData ? 'Live' : 'Mock',
+              style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                color: AppTheme.lightTheme.colorScheme.onSurface,
+              ),
+            ),
+            Switch(
+              value: _useLiveData,
+              onChanged: (val) async {
+                setState(() {
+                  _useLiveData = val;
+                });
+                if (val) {
+                  await _fetchLiveTransactions();
+                } else {
+                  _loadMockData();
+                }
+              },
+              activeThumbColor: AppTheme.lightTheme.colorScheme.primary,
+            ),
+          ],
+        ),
         IconButton(
           onPressed: () {
             // Navigate to settings or more options

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../services/transaction_service.dart';
 import './widgets/amount_input_widget.dart';
 import './widgets/category_selector_widget.dart';
 import './widgets/date_picker_widget.dart';
@@ -167,23 +168,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen>
     HapticFeedback.mediumImpact();
 
     try {
-      // Simulate saving expense
-      await Future.delayed(const Duration(milliseconds: 1500));
+      // Prepare payload for backend
+      final int categoryId = (selectedCategory!['id'] as int);
+      final String note = description.trim();
 
-      // Create expense data
-      // final expenseData = {
-      //  'id': DateTime.now().millisecondsSinceEpoch,
-      //   'amount': amount,
-      //   'category': selectedCategory,
-      //   'description': description,
-      //   'date': selectedDate.toIso8601String(),
-      //   'receipt': capturedReceipt?.path,
-      //   'paymentMethod': moreDetails['paymentMethod'],
-     //    'tags': moreDetails['tags'],
-     //    'notes': moreDetails['notes'],
-     //    'location': moreDetails['location'],
-     //    'createdAt': DateTime.now().toIso8601String(),
-     //  };
+      // Create via service
+      final txService = TransactionService();
+      await txService.createTransaction(
+        amount: amount,
+        categoryId: categoryId,
+        date: selectedDate,
+        type: 'expense',
+        note: note,
+      );
 
       // Show success message
       _showSuccessMessage();
@@ -195,7 +192,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen>
         Navigator.of(context).pushReplacementNamed('/dashboard-home-screen');
       }
     } catch (e) {
-      _showErrorMessage('Failed to save expense. Please try again.');
+      _showErrorMessage('Failed to save expense: ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() {

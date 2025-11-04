@@ -113,4 +113,54 @@ class TransactionService {
       throw Exception(e.message ?? 'Network or server error');
     }
   }
+
+  /// Create a new transaction for the current logged-in user
+  /// Required fields (backend contract):
+  /// - amount: number
+  /// - type: 'income' | 'expense'
+  /// - category_id: integer
+  /// - date: 'YYYY-MM-DD'
+  /// - note: string (optional)
+  Future<void> createTransaction({
+    required double amount,
+    required int categoryId,
+    required DateTime date,
+    String type = 'expense',
+    String note = '',
+  }) async {
+    try {
+      final storage = const FlutterSecureStorage();
+      final token = await storage.read(key: 'jwt_token');
+      if (token == null || token.isEmpty) {
+        throw Exception('User not logged in — missing token');
+      }
+
+      final String ymd =
+          '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+      final body = {
+        'amount': amount,
+        'type': type,
+        'category_id': categoryId,
+        'date': ymd,
+        'note': note,
+      };
+
+      final response = await _dio.post(
+        '/transactions',
+        data: body,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode != 201) {
+        throw Exception('Failed to create transaction: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      final respData = e.response?.data;
+      if (respData is Map && respData.isNotEmpty) {
+        throw Exception(respData['error'] ?? respData['message'] ?? 'Network or server error');
+      }
+      throw Exception(e.message ?? 'Network or server error');
+    }
+  }
 }

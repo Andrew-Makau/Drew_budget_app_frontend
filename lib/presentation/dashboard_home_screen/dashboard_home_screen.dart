@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../services/transaction_service.dart';
 import '../../services/auth_service.dart';
 import './widgets/balance_card_widget.dart';
 import './widgets/quick_actions_widget.dart';
@@ -28,6 +29,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
   int _selectedTabIndex = 0;
   final String _userName = "Andrew";
   DateTime _lastUpdated = DateTime.now();
+  bool _useLiveData = false;
 
   // Mock data
   final double _totalBalance = 4250.75;
@@ -62,7 +64,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
     },
   ];
 
-  final List<Map<String, dynamic>> _recentTransactions = [
+  // Immutable mock data we can restore when Live is off
+  final List<Map<String, dynamic>> _initialMockTransactions = [
     {
       "id": 1,
       "title": "Starbucks Coffee",
@@ -110,6 +113,11 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
     },
   ];
 
+  // The list currently displayed (mock by default)
+  List<Map<String, dynamic>> _recentTransactions = [];
+
+  bool _isLoadingLive = false;
+
   @override
   void initState() {
     super.initState();
@@ -124,6 +132,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
       CurvedAnimation(
           parent: _refreshAnimationController, curve: Curves.easeInOut),
     );
+
+    // Initialize with mock data on first load
+    _recentTransactions = List<Map<String, dynamic>>.from(_initialMockTransactions);
 
     // Debug: check if token is stored
     AuthService().getToken().then((token) {
@@ -158,8 +169,12 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
     _refreshAnimationController.forward();
     HapticFeedback.mediumImpact();
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    if (_useLiveData) {
+      await _fetchAndSetTransactions();
+    } else {
+      // Simulate work
+      await Future.delayed(const Duration(seconds: 1));
+    }
 
     setState(() {
       _isRefreshing = false;
@@ -169,12 +184,33 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
     _refreshAnimationController.reset();
 
     Fluttertoast.showToast(
-      msg: "Data updated successfully",
+      msg: _useLiveData ? "Live data updated" : "Data updated",
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
       backgroundColor: Colors.green.shade600,
       textColor: Colors.white,
     );
+  }
+
+  Future<void> _fetchAndSetTransactions() async {
+    setState(() => _isLoadingLive = true);
+    try {
+      final service = TransactionService();
+      final items = await service.fetchTransactions();
+      setState(() {
+        _recentTransactions = items;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to fetch transactions: $e'),
+          backgroundColor: AppTheme.lightTheme.colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoadingLive = false);
+    }
   }
 
   void _toggleBalanceVisibility() {
@@ -330,6 +366,33 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
                       ),
                     ],
                   ),
+                  Row(
+                    children: [
+                      Text(
+                        _useLiveData ? 'Live' : 'Mock',
+                        style: AppTheme.lightTheme.textTheme.labelSmall?.copyWith(
+                          color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      Switch(
+                        value: _useLiveData,
+                        activeThumbColor: AppTheme.lightTheme.primaryColor,
+                        onChanged: (val) async {
+                          HapticFeedback.lightImpact();
+                          setState(() => _useLiveData = val);
+                          if (val) {
+                            // switching to Live → fetch
+                            await _fetchAndSetTransactions();
+                          } else {
+                            // switching back to Mock → restore initial mock list
+                            setState(() {
+                              _recentTransactions = List<Map<String, dynamic>>.from(_initialMockTransactions);
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                   GestureDetector(
                     onTap: () {
                       HapticFeedback.lightImpact();
@@ -407,6 +470,14 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
                       ),
 
                       // Recent Transactions
+                      if (_isLoadingLive)
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 1.h),
+                          child: LinearProgressIndicator(
+                            minHeight: 4,
+                            color: AppTheme.lightTheme.primaryColor,
+                          ),
+                        ),
                       RecentTransactionsWidget(
                         transactions: _recentTransactions,
                         onEditTransaction: _handleEditTransaction,
