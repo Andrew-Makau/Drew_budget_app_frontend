@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sizer/sizer.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/app_export.dart';
 import '../../services/transaction_service.dart';
@@ -27,7 +28,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
   bool _isBalanceVisible = true;
   bool _isRefreshing = false;
   int _selectedTabIndex = 0;
-  final String _userName = "Andrew";
+  String _userName = "Andrew"; // default fallback until loaded from storage
   DateTime _lastUpdated = DateTime.now();
   bool _useLiveData = false;
 
@@ -140,6 +141,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
     AuthService().getToken().then((token) {
       print("🔑 Stored token: $token");
     });
+
+    // Load name from secure storage to reflect Profile updates
+    _loadUserNameFromStorage();
   }
 
 
@@ -291,6 +295,37 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
     );
+  }
+
+  Future<void> _loadUserNameFromStorage() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final storedName = await storage.read(key: 'user_name');
+      String? nameToUse = storedName;
+      if (nameToUse == null || nameToUse.trim().isEmpty) {
+        final email = await storage.read(key: 'user_email');
+        nameToUse = _deriveNameFromEmail(email);
+      }
+      final String safeName = nameToUse;
+      if (mounted && safeName.trim().isNotEmpty) {
+        setState(() {
+          _userName = safeName.trim();
+        });
+      }
+    } catch (_) {
+      // keep default name on failure
+    }
+  }
+
+  String _deriveNameFromEmail(String? email) {
+    if (email == null || email.isEmpty) return _userName;
+    final beforeAt = (email.split('@').isNotEmpty) ? email.split('@').first : email;
+    final parts = beforeAt.replaceAll(RegExp(r'[._-]+'), ' ').split(' ');
+    final capped = parts
+        .where((p) => p.isNotEmpty)
+        .map((p) => p[0].toUpperCase() + (p.length > 1 ? p.substring(1) : ''))
+        .join(' ');
+    return capped.isEmpty ? _userName : capped;
   }
 
   String _getGreeting() {
@@ -526,7 +561,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen>
                 Navigator.pushNamed(context, '/budget-categories-screen');
                 break;
               case 3:
-                Navigator.pushNamed(context, '/login-screen');
+                Navigator.pushNamed(context, '/profile-screen');
                 break;
             }
           },

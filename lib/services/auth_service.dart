@@ -71,12 +71,29 @@ class AuthService {
 
       if (token != null) {
         await _storage.write(key: 'jwt_token', value: token.toString());
+        // Persist the email used to login for profile display
+        await _storage.write(key: 'user_email', value: email);
+        // Derive and persist a display name if not provided by backend
+        // If backend starts returning a profile/name, this can be replaced
+        final derivedName = _deriveNameFromEmail(email);
+        await _storage.write(key: 'user_name', value: derivedName);
       }
 
       return response;
     } on DioException catch (e) {
       throw Exception(_handleError(e));
     }
+  }
+
+  String _deriveNameFromEmail(String email) {
+    final beforeAt = (email.split('@').isNotEmpty) ? email.split('@').first : email;
+    // Replace common separators and capitalize words
+    final parts = beforeAt.replaceAll(RegExp(r'[._-]+'), ' ').split(' ');
+    final capped = parts
+        .where((p) => p.isNotEmpty)
+        .map((p) => p[0].toUpperCase() + (p.length > 1 ? p.substring(1) : ''))
+        .join(' ');
+    return capped.isEmpty ? 'User' : capped;
   }
 
   /// Logout: delete token
