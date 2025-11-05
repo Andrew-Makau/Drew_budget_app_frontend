@@ -8,15 +8,20 @@ class SocialRegistrationButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+  final bool compact = size.height < 740; // tighten spacing on smaller heights
+  final bool ultraCompact = size.height < 650; // most aggressive compacting
+
     return Column(
       children: [
-        Text(
-          'Sign up with',
-          style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+        if (!ultraCompact)
+          Text(
+            'Sign up with',
+            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+              color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+            ),
           ),
-        ),
-        SizedBox(height: 3.h),
+        SizedBox(height: ultraCompact ? 1.2.h : (compact ? 2.h : 3.h)),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -25,22 +30,25 @@ class SocialRegistrationButtons extends StatelessWidget {
               iconName: 'g_translate',
               label: 'Google',
               onTap: () => _handleGoogleSignUp(context),
+              showLabel: !ultraCompact,
             ),
             _buildSocialButton(
               context: context,
               iconName: 'apple',
               label: 'Apple',
               onTap: () => _handleAppleSignUp(context),
+              showLabel: !ultraCompact,
             ),
             _buildSocialButton(
               context: context,
               iconName: 'facebook',
               label: 'Facebook',
               onTap: () => _handleFacebookSignUp(context),
+              showLabel: !ultraCompact,
             ),
           ],
         ),
-        SizedBox(height: 4.h),
+        SizedBox(height: ultraCompact ? 1.5.h : (compact ? 2.5.h : 4.h)),
         Row(
           children: [
             Expanded(
@@ -77,12 +85,16 @@ class SocialRegistrationButtons extends StatelessWidget {
     required String iconName,
     required String label,
     required VoidCallback onTap,
+    bool showLabel = true,
   }) {
+    final size = MediaQuery.of(context).size;
+    final bool compact = size.height < 740;
+    final bool ultraCompact = size.height < 650;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 25.w,
-        height: 6.h,
+        height: ultraCompact ? 4.4.h : (compact ? 5.h : 6.h),
         decoration: BoxDecoration(
           color: AppTheme.lightTheme.colorScheme.surface.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(16),
@@ -105,17 +117,21 @@ class SocialRegistrationButtons extends StatelessWidget {
           children: [
             CustomIconWidget(
               iconName: iconName,
-              size: 24,
+              size: ultraCompact ? 20 : 24,
               color: AppTheme.lightTheme.colorScheme.onSurface,
             ),
-            SizedBox(height: 0.5.h),
-            Text(
-              label,
-              style: AppTheme.lightTheme.textTheme.labelSmall?.copyWith(
-                color: AppTheme.lightTheme.colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
+            if (showLabel) ...[
+              SizedBox(height: compact ? 0.3.h : 0.5.h),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.lightTheme.textTheme.labelSmall?.copyWith(
+                  color: AppTheme.lightTheme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

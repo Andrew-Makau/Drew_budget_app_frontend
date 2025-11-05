@@ -432,65 +432,124 @@ class _LoginScreenState extends State<LoginScreen>
 
                         SizedBox(height: 2.h),
 
-                        // Remember me and forgot password
+                        // Remember me and forgot password (responsive, no overflow)
                         SlideTransition(
                           position: _slideAnimation,
                           child: FadeTransition(
                             opacity: _fadeAnimation,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final isTight = constraints.maxWidth < 340;
+                                if (isTight) {
+                                  // Stack vertically on very narrow widths to prevent overflow
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Checkbox(
+                                            value: _rememberMe,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _rememberMe = value ?? false;
+                                              });
+                                              HapticFeedback.lightImpact();
+                                            },
+                                            fillColor:
+                                                WidgetStateProperty.resolveWith((states) {
+                                              if (states.contains(WidgetState.selected)) {
+                                                return Colors.white;
+                                              }
+                                              return Colors.transparent;
+                                            }),
+                                            checkColor: AppTheme.lightTheme.colorScheme.primary,
+                                            side: const BorderSide(color: Colors.white, width: 2),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              'Remember me',
+                                              overflow: TextOverflow.ellipsis,
+                                              style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                                                color: Colors.white.withValues(alpha: 0.8),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: TextButton(
+                                          onPressed: () {
+                                            HapticFeedback.lightImpact();
+                                            // Navigate to forgot password screen
+                                          },
+                                          child: Text(
+                                            'Forgot Password?',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+                                // Default horizontal layout with Expanded/Flexible to avoid overflow
+                                return Row(
                                   children: [
-                                    Checkbox(
-                                      value: _rememberMe,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _rememberMe = value ?? false;
-                                        });
-                                        HapticFeedback.lightImpact();
-                                      },
-                                      fillColor:
-                                          WidgetStateProperty.resolveWith(
-                                              (states) {
-                                        if (states
-                                            .contains(WidgetState.selected)) {
-                                          return Colors.white;
-                                        }
-                                        return Colors.transparent;
-                                      }),
-                                      checkColor: AppTheme
-                                          .lightTheme.colorScheme.primary,
-                                      side: const BorderSide(
-                                          color: Colors.white, width: 2),
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Checkbox(
+                                            value: _rememberMe,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _rememberMe = value ?? false;
+                                              });
+                                              HapticFeedback.lightImpact();
+                                            },
+                                            fillColor:
+                                                WidgetStateProperty.resolveWith((states) {
+                                              if (states.contains(WidgetState.selected)) {
+                                                return Colors.white;
+                                              }
+                                              return Colors.transparent;
+                                            }),
+                                            checkColor: AppTheme.lightTheme.colorScheme.primary,
+                                            side: const BorderSide(color: Colors.white, width: 2),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              'Remember me',
+                                              overflow: TextOverflow.ellipsis,
+                                              style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                                                color: Colors.white.withValues(alpha: 0.8),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    Text(
-                                      'Remember me',
-                                      style: AppTheme
-                                          .lightTheme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.8),
+                                    TextButton(
+                                      onPressed: () {
+                                        HapticFeedback.lightImpact();
+                                        // Navigate to forgot password screen
+                                      },
+                                      child: Text(
+                                        'Forgot Password?',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ),
                                   ],
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    HapticFeedback.lightImpact();
-                                    // Navigate to forgot password screen
-                                  },
-                                  child: Text(
-                                    'Forgot Password?',
-                                    style: AppTheme
-                                        .lightTheme.textTheme.bodyMedium
-                                        ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -571,8 +630,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 TextButton(
                                   onPressed: () {
                                     HapticFeedback.lightImpact();
-                                    Navigator.pushNamed(
-                                        context, '/registration-screen');
+                                    Navigator.pushNamed(context, '/signup-screen');
                                   },
                                   child: Text(
                                     'Create Account',

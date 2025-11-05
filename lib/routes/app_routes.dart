@@ -17,6 +17,7 @@ class AppRoutes {
   static const String login = '/login-screen';
   static const String budgetCategories = '/budget-categories-screen';
   static const String registration = '/registration-screen';
+  static const String signup = '/signup-screen';
   static const String profile = '/profile-screen';
   static const String editProfile = '/edit-profile-screen';
 
@@ -28,6 +29,7 @@ class AppRoutes {
     login: (context) => const LoginScreen(),
     budgetCategories: (context) => const BudgetCategoriesScreen(),
     registration: (context) => const RegistrationScreen(),
+  signup: (context) => const RegistrationScreen(),
     profile: (context) => const ProfileScreen(),
   editProfile: (context) => const EditProfileScreen(),
     // TODO: Add your other routes here
